@@ -1,0 +1,70 @@
+
+#import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+
+#import data
+plt.style.use('ggplot')
+plt.rcParams['figure.figsize']= (12,8)
+iris = pd.read_csv("C:/Users/deivs/OneDrive/Desktop/iris.data", header = None)
+iris.head()
+iris.info
+
+#visualize the data
+sns.scatterplot(x = iris.sepal_length, y = iris.sepal_width,
+                hue = iris.species, style = iris.species);
+
+
+x = iris.iloc[:, 0:4].values #feature matrix
+y = iris.species.values #target vector ( has species )
+#standardize the data
+X = StandardScaler().fit_transform(x)
+
+
+#Compute eigenvectors and eigenvalues
+#first going to compute covariance matrix & then decompose
+covariance_matrix = np.cov(X.T)
+
+#eigendecomposition fo covar matrix : sigma = W (captial lambda) W^-1
+#here W is the eigenvector and capital lambda is an diagonal matrix where the non-zeros are eigenvalues
+eigen_values, eigen_vectors = np.linalg.eig(covariance_matrix)
+print("The eigenvectors are: \n", eigen_vectors, "\n")
+print("the eigenvalues are: \n", eigen_values, "\n")
+
+#the first eigenvalue is for scaling the first coloumn of eigenvector, etc
+
+#Singular Value Decomposition
+eigen_vec_svd, s, v = np.linalg.svd(X.T)
+eigen_vec_svd
+
+#picking Principal Components using the explained variance
+for val in eigen_values:
+    print(val)
+
+var_expl = [(i/sum(eigen_values)) * 100 for i in eigen_values]
+var_expl
+
+cum_var_expl = np.cumsum(var_expl)
+cum_var_expl #so we see that the first feature alone explains the first amount of data, the first two features explains the second amount of data etc
+
+#now lets graph it out and see
+sns.lineplot(x = [1,2,3,4], y = cum_var_expl);
+plt.xlabel("number of components")
+plt.ylabel("cumulative explained variance")
+plt.title("explained variance vs # of components")
+plt.show()
+
+
+#project data onto lower dimension linear subspaces
+#Xpca = X.W
+
+eigen_vectors
+projection_matrix = (eigen_vectors.t[:][:])[:2].T #we set a threshold of 95%, and the first two components explained up to and alittle past 95%
+print(projection_matrix)
+X_pca = X.dot(projection_matrix)
+for species in ('Iris-setosa', 'Iris-versicolor', 'Iris-virginica'):
+    sns.scatterplot(X_pca[y==species, 0]
+                    X_pca[y==species, 1])
